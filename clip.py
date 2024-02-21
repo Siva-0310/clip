@@ -46,6 +46,19 @@ def get_index(index:int = -1,key_based:bool = False) -> None:
             print("enter the valid index")
         return
     
+def rm_index(index:int = -1,key_based:bool = False) -> None:
+    storage = load_storage()
+    if not key_based:
+        try:
+            storage["indexed_storage"].pop(index)
+        except:
+            print("enter valid index")
+    else:
+        try:
+            storage["key_storage"].pop(index)
+        except:
+            print("enter the valid index")
+    save_storage(storage)
 
 def add_entry(value:str,key:str=None) -> None:
     data = load_storage()
@@ -76,6 +89,17 @@ def ls_arg(args:list,n:int):
     list_entries()
 
 
+def rm_arg(args:list,n:int):
+    if n>= 1 and (args[0] == "-k" or args[0] == "--key_storage"):
+        rm_index(index=args[1],key_based=True)
+        return
+    try:
+        index = int(args[0])
+    except:
+        print("enter the valid index")
+        return
+    rm_index(index=index)
+
 def get_arg(args:list,n:int):
     if (args[0] == "-k" or args[0] == "--key") and  n >= 2:
         get_index(index=args[1],key_based=True)
@@ -104,6 +128,8 @@ def main():
         clear_arg()
     elif n != 0 and args[0] == "ls":
         ls_arg(args[1:],n)
+    elif n != 0 and args[0] == "rm":
+        rm_arg(args[1:],n)
  
 if __name__ == "__main__":
     main()
