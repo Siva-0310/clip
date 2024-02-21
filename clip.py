@@ -1,91 +1,109 @@
 #!/usr/bin/env python
+
+
 import sys
 import json
 from pathlib import Path
+
+
 storage_file = Path.home() / '.clip_storage.json'
-def load_storage():
+
+
+def load_storage() -> dict:
     if storage_file.exists():
         with open(storage_file,'r') as file:
             return json.load(file)
-    return {"indexed_storage": [], "key_storage": {}}
+    return {"indexed_storage": [], "key_storage": {},"temp_storage":None}
+
+
 def save_storage(data:dict) -> None:
     with open(storage_file,'w') as file:
         json.dump(data,file,indent=4)
+
+
 def list_entries(all_values:bool = False,indexed:bool = True) -> None:
+    storage = load_storage()
     if all_values:
-        print(json.dumps(load_storage(),indent=4))
+        print(json.dumps(storage,indent=4))
     elif indexed:
-        print(json.dumps(load_storage()["indexed_storage"],indent=4))
+        print(json.dumps(storage["indexed_storage"],indent=4))
     else:
-        print(json.dumps(load_storage()["key_storage"],indent=4))
-def clear() -> None:
-    data = {"indexed_storage": [], "key_storage": {}}
-    save_storage(data)
-def get(index:int = -1,key_based:bool = False) -> None:
-    stor = load_storage()
+        print(json.dumps(storage["key_storage"],indent=4))
+
+
+def get_index(index:int = -1,key_based:bool = False) -> None:
+    storage = load_storage()
     if not key_based:
-        if len(stor["indexed_storage"]) < index or index == -1:
-            print(stor["indexed_storage"][index])
-    elif stor["key_storage"].get(index,-1) != -1:
-        print(stor["key_storage"][index])
+        try:
+            print(storage["indexed_storage"][index])
+        except:
+            print("enter valid index")
+        return
+    else:
+        try:
+            print(storage["key_storage"][index])
+        except:
+            print("enter the valid index")
+        return
+    
+
 def add_entry(value:str,key:str=None) -> None:
-    if value is None:
-        if not sys.stdin.isatty():
-            value = sys.stdin.read().rstrip("\n")
-        else:
-            print("Error: No value provided for adding.")
-            return
     data = load_storage()
-    print(data)
     if key is None:
         data["indexed_storage"].append(value)
     else:
         data["key_storage"][key] = value
     save_storage(data)
+
+
+def add_arg(args:list,n:int):
+    if args[0] != "-k" and args[0] != "--key" and n >= 1:
+        add_entry(args[0])
+        return
+    if n < 3:
+        print("enter the valid arguments")
+        return
+    key,val = args[1],args[2]
+    add_entry(value=val,key=key)
+
+def ls_arg(args:list,n:int):
+    if n != 0 and (args[0] == "-a" or args[0] == "--all"):
+        list_entries(all_values=True)
+        return
+    if n != 0 and (args[0] == "-k" or args[0] == "--key_storage"):
+        list_entries(indexed=False)
+        return
+    list_entries()
+
+
+def get_arg(args:list,n:int):
+    if (args[0] == "-k" or args[0] == "--key") and  n >= 2:
+        get_index(index=args[1],key_based=True)
+        return
+    try:
+        index = int(args[0])
+    except:
+        print("enter the valid index")
+        return
+    get_index(index=index)
+
+
+def clear_arg() -> None:
+    data = {"indexed_storage": [], "key_storage": {},"temp_storage": None}
+    save_storage(data)
+
+
 def main():
     args = sys.argv[1:]
-    print(args)
-    command = args[0]
-    if command == 'add':
-        if len(args) >= 2:
-            if (args[1] == "-k" or args[1] == "--key"):
-                if len(args) < 4:
-                    print("Error: No value provided for adding.")
-                    return
-                key = args[2]
-                value = args[3]
-                add_entry(value,key)
-                return
-            value = args[1]
-            add_entry(value)
-        else:
-            print("Error: No valid options provided.")
-    if command == "ls":
-        if len(args) >= 2:
-            if args[1] == "-a" or args[1] == "--all":
-                list_entries(all_values=True)
-            elif args[1] == "-k" or args[1] == "--key_storage":
-                list_entries(indexed=False)
-            else:
-                print("Error: No valid options provided.")
-        else:
-            list_entries()
-    if command == "clear":
-        clear()
-    if command == 'get':
-        if len(args) >= 2:
-            if args[1] == "-k" or args[1] == "--key":
-                if len(args) >= 3:
-                    get(index=args[2],key_based=True)
-                else:
-                    print("Error: No key provided for retrieving.")
-            else:
-                try:
-                    index = int(args[1])
-                    get(index=index)
-                except:
-                    print("Error: No valid index provided for retrieving.")
-        else:
-            get()
+    n = len(args)-1
+    if n != 0 and args[0] == "add":
+        add_arg(args[1:],n)
+    elif n != 0 and args[0] == "get":
+        get_arg(args[1:],n)
+    elif args[0] == "clear":
+        clear_arg()
+    elif n != 0 and args[0] == "ls":
+        ls_arg(args[1:],n)
  
-main()
+if __name__ == "__main__":
+    main()
