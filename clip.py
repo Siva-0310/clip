@@ -29,35 +29,34 @@ def save_storage(data: dict) -> None:
 def list_entries(all_values: bool = False, indexed: bool = True) -> None:
     storage = load_storage()
     if all_values:
-        print(json.dumps(storage, indent=4))
+        json.dump(storage,sys.stdout,indent=4)
     elif indexed:
-        print(json.dumps(storage["indexed_storage"], indent=4))
+        json.dump(storage["indexed_storage"],sys.stdout, indent=4)
     else:
-        print(json.dumps(storage["key_storage"], indent=4))
-
-
+        json.dump(storage["key_storage"],sys.stdout, indent=4)
+    sys.stdout.write("\n")
 def get_index(index, key_based: bool = False) -> None:
     storage = load_storage()
     if not key_based:
         try:
             index = int(index)  # Ensure index is an integer
-            print(storage["indexed_storage"][index])
+            sys.stdout.write(storage["indexed_storage"][index])
         except (IndexError, ValueError):
-            print(f"Error ID {ERROR_ID_INVALID_INDEX}: Enter a valid index.")
+            sys.stderr.write(f"Error ID {ERROR_ID_INVALID_INDEX}: Enter a valid index.\n")
             sys.exit(ERROR_ID_INVALID_INDEX)
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            sys.stderr.write(f"Unexpected error: {e}\n")
             sys.exit(0)
     else:
         try:
-            print(storage["key_storage"][index])
+            sys.stdout.write(storage["key_storage"][index])
         except KeyError:
-            print(f"Error ID {ERROR_ID_INVALID_KEY}: Enter a valid key.")
+            sys.stderr.write(f"Error ID {ERROR_ID_INVALID_KEY}: Enter a valid key.\n")
             sys.exit(ERROR_ID_INVALID_KEY)
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            sys.stderr.write(f"Unexpected error: {e}\n")
             sys.exit(0)
-
+    sys.stdout.write("\n")
 def rm_index(index, key_based: bool = False) -> None:
     storage = load_storage()
     if not key_based:
@@ -65,11 +64,11 @@ def rm_index(index, key_based: bool = False) -> None:
             index = int(index)  # Ensure index is an integer
             storage["indexed_storage"].pop(index)
         except (IndexError, ValueError):
-            print(f"Error ID {ERROR_ID_INVALID_INDEX}: Enter a valid index.")
+            sys.stderr.write(f"Error ID {ERROR_ID_INVALID_INDEX}: Enter a valid index.\n")
             sys.exit(ERROR_ID_INVALID_INDEX)
     else:
         if index not in storage["key_storage"]:
-            print(f"Error ID {ERROR_ID_INVALID_KEY}: Enter a valid key.")
+            sys.stderr.write(f"Error ID {ERROR_ID_INVALID_KEY}: Enter a valid key.\n")
             sys.exit(ERROR_ID_INVALID_KEY)
         storage["key_storage"].pop(index)
     save_storage(storage)
@@ -86,7 +85,7 @@ def add_entry(value: str, key: str = None) -> None:
 
 def validate_args_for_add(args: list):
     if len(args) < 1 or (args[0] in ("-k", "--key") and len(args) < 3):
-        print(f"Error ID {ERROR_ID_INVALID_ARGUMENTS}: Enter valid arguments.")
+        sys.stderr.write(f"Error ID {ERROR_ID_INVALID_ARGUMENTS}: Enter valid arguments.\n")
         return False
     return True
 
@@ -102,7 +101,7 @@ def add_arg(args: list, n: int):
 
 def validate_option_for_ls(args: list, n: int) -> bool:
     if n > 0 and args[0] not in ("-a", "--all", "-k", "--key"):
-        print(f"Error ID {ERROR_ID_INVALID_OPTION}: Invalid option '{args[0]}' for ls.")
+        sys.stderr.write(f"Error ID {ERROR_ID_INVALID_OPTION}: Invalid option '{args[0]}' for ls.\n")
         return False
     return True
 
@@ -120,7 +119,7 @@ def ls_arg(args: list, n: int):
 
 def validate_args_for_rm(args: list, n: int) -> bool:
     if n > 0 and args[0] in ("-k", "--key") and len(args) < 2:
-        print(f"Error ID {ERROR_ID_INVALID_ARGUMENTS}: Key-based removal requires a key.")
+        sys.stderr.write(f"Error ID {ERROR_ID_INVALID_ARGUMENTS}: Enter valid arguments.\n")
         return False
     return True
 
@@ -136,7 +135,7 @@ def rm_arg(args: list, n: int):
 
 def validate_option_for_clear(args: list, n: int) -> bool:
     if n > 0 and args[0] not in ("-k", "--key", "-i", "--index"):
-        print(f"Error ID {ERROR_ID_INVALID_OPTION}: Invalid option '{args[0]}' for clear.")
+        sys.stderr.write(f"Error ID {ERROR_ID_INVALID_OPTION}: Invalid option '{args[0]}' for ls.\n")
         return False
     return True
 
@@ -155,10 +154,10 @@ def clear_arg(args: list, n: int) -> None:
 
 def validate_args_for_get(args: list, n: int) -> bool:
     if n < 1:
-        print(f"Error ID {ERROR_ID_INVALID_ARGUMENTS}: Enter valid arguments for get.")
+        sys.stderr.write(f"Error ID {ERROR_ID_INVALID_ARGUMENTS}: Enter valid arguments for get.")
         return False
     if args[0] in ["-k", "--key"] and n < 2:
-        print(f"Error ID {ERROR_ID_INVALID_ARGUMENTS}: Key-based get requires a key.")
+        sys.stderr.write(f"Error ID {ERROR_ID_INVALID_ARGUMENTS}: Key-based get requires a key.")
         return False
     return True
 
@@ -197,16 +196,19 @@ Options:
   -a, --all         Lists all entries (indexed and key-based).
   -i, --index     Specifies indexed storage for the clear command.
 """
-    print(help_text)
+    sys.stdout.write(help_text)
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] in ("help", "--help", "-h"):
+    sys_args = sys.argv
+    if not sys.stdin.isatty():
+        pipe_input = sys.stdin.readline().strip("\n").split(" ")
+        sys_args.extend(pipe_input)
+    if len(sys_args) < 2 or sys_args[1] in ("help", "--help", "-h"):
         help_command()
         return
-
-    command = sys.argv[1]
-    args = sys.argv[2:]
+    command = sys_args[1]
+    args = sys_args[2:]
     n = len(args)
 
     command_map = {
@@ -220,7 +222,7 @@ def main():
     if command in command_map:
         command_map[command](args, n)
     else:
-        print(f"Error ID {ERROR_ID_UNKNOWN_COMMAND}: Unknown command '{command}'.")
+        sys.stderr.write(f"Error ID {ERROR_ID_UNKNOWN_COMMAND}: Unknown command '{command}'.\n")
         help_command()
         sys.exit(ERROR_ID_UNKNOWN_COMMAND)
 
