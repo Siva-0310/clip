@@ -15,16 +15,35 @@ storage_file = Path.home() / '.clip_storage.json'
 
 
 def load_storage() -> dict:
-    if storage_file.exists():
-        with open(storage_file, 'r') as file:
-            return json.load(file)
+    try:
+        if storage_file.exists():
+            with open(storage_file, 'r') as file:
+                return json.load(file)
+    except PermissionError:
+        sys.stderr.write("Error: Permission denied while trying to read the storage file.\n")
+        sys.exit(1)
+    except json.JSONDecodeError:
+        sys.stderr.write("Error: The storage file is not in valid JSON format.\n")
+        sys.exit(1)
     return {"indexed_storage": [], "key_storage": {}}
 
 
 def save_storage(data: dict) -> None:
-    with open(storage_file, 'w') as file:
-        json.dump(data, file, indent=4)
-
+    try:
+        with open(storage_file, 'w') as file:
+            json.dump(data, file, indent=4)
+    except PermissionError:
+        sys.stderr.write("Error: Permission denied while trying to write to the storage file.\n")
+        sys.exit(1)
+    except InterruptedError:
+        sys.stderr.write("Error: The file operation was interrupted.\n")
+        sys.exit(1)
+    except OSError as e:
+        if e.errno == 28:  # Disk full
+            sys.stderr.write("Error: No space left on device to write to the storage file.\n")
+        else:
+            sys.stderr.write(f"Error: An OS error occurred: {e}\n")
+        sys.exit(1)
 
 def list_entries(all_values: bool = False, indexed: bool = True) -> None:
     storage = load_storage()
