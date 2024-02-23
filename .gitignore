@@ -1,0 +1,5 @@
+/__init__.py
+/build
+/clip.egg-info
+/dist
+/setup.py
