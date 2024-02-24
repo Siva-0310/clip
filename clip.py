@@ -4,7 +4,8 @@ import sys
 import json
 from pathlib import Path
 
-# Define error IDs
+SCRIPT_VERSION = '1.0.0'
+
 ERROR_ID_INVALID_INDEX = 1001
 ERROR_ID_INVALID_KEY = 1002
 ERROR_ID_INVALID_ARGUMENTS = 1003
@@ -207,6 +208,8 @@ Commands:
   
   clear  Clears storage. Use "-k" for key storage, "-i" for indexed storage.
          Example: clear, clear -k, or clear -i
+   
+  -v, --version  Show script version.
   
   help   Shows this help message.
 
@@ -223,6 +226,9 @@ def main():
     if not sys.stdin.isatty():
         pipe_input = sys.stdin.readline().strip("\n").split(" ")
         sys_args.extend(pipe_input)
+    if len(sys_args) == 2 and sys_args[1] in ("-v","--version"):
+        sys.stdout.write(f"clip version: {SCRIPT_VERSION}\n")
+        return
     if len(sys_args) < 2 or sys_args[1] in ("help", "--help", "-h"):
         help_command()
         return
