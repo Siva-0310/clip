@@ -1,0 +1,11 @@
+from pathlib import Path
+
+SCRIPT_VERSION = '1.0.0'
+
+ERROR_ID_INVALID_INDEX = 1001
+ERROR_ID_INVALID_KEY = 1002
+ERROR_ID_INVALID_ARGUMENTS = 1003
+ERROR_ID_UNKNOWN_COMMAND = 1004
+ERROR_ID_INVALID_OPTION = 1005
+
+storage_file = Path.home() / '.clip_storage.json'

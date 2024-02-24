@@ -10,6 +10,14 @@ This is a simple command-line utility for managing a clipboard storage system. I
 - **Remove Entries:** Delete entries by their index or key.
 - **Clear Storage:** Completely clear the storage or selectively by indexed or key-based entries.
 
+## Installation
+
+You can easily install `clip` using pip. Ensure you have Python and pip installed on your system and run the following command:
+
+```bash
+pip install json-clip
+```
+
 ### Commands and Options
 
 #### Add
